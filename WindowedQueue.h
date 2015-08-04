@@ -3,39 +3,30 @@
 #include <stdio.h>
 #include <math.h>
 
-template<typename T>
+
+class NoItemsException {};
+
+template<typename T, size_t CAPACITY>
 class WindowedQueue
 {
     private:
-        const size_t capacity_;
         size_t top_, bottom_;
-        T* data_;
+        T data_[CAPACITY];
     public:
 
-        class NoItemsException {};
-
-        WindowedQueue(size_t capacity)
-            : capacity_(capacity)
-            , top_(0)
+        WindowedQueue()
+            : top_(0)
             , bottom_(0)
-        {
-            data_ = new T[capacity];
-        }
-
-        ~WindowedQueue()
-        {
-            clear();
-            delete [] data_;
-        }
+        {}
 
         size_t capacity() const
         {
-            return capacity_;
+            return CAPACITY;
         }
 
         size_t count() const
         {
-            return bottom_ >= top_ ? bottom_ - top_ : capacity_ - top_ + bottom_;
+            return bottom_ >= top_ ? bottom_ - top_ : capacity() - top_ + bottom_;
         }
 
         bool empty() const
@@ -45,7 +36,7 @@ class WindowedQueue
 
         bool full() const
         {
-            return count() == capacity_;
+            return count() == capacity();
         }
 
         void clear()
@@ -58,10 +49,11 @@ class WindowedQueue
             if (full()) {
                 pop();
             }
-            data_[bottom_++ % capacity_] = value;
+            data_[bottom_++ % capacity()] = value;
         }
 
-        void push(const WindowedQueue<T>& queue)
+        template<typename Q>
+        void pushQueue(const Q& queue) //todo: optimaze by memmove
         {
             for (size_t i = 0; i < queue.count(); ++i) {
                 push(queue.get(i));
@@ -73,17 +65,16 @@ class WindowedQueue
             if (empty()) {
                 throw new NoItemsException;
             }
-            T value = data_[top_++ % capacity_];
+            T value = data_[top_++ % capacity()];
             return value;
         }
-
 
         T get(size_t index) const
         {
             if (empty()) {
                 throw new NoItemsException;
             }
-            index = (index + top_)  % capacity_;
+            index = (index + top_)  % capacity();
             return data_[index];
         }
 
@@ -92,7 +83,6 @@ class WindowedQueue
             size_t c = count();
             T value = 0;
             for (size_t i = 0; i < c; ++i) {
-                printf("%lu - %f\n",i ,get(i));
                 value += get(i);
             }
             return value;

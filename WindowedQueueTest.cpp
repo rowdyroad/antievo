@@ -3,24 +3,24 @@
 #include <stdio.h>
 int main()
 {
-    WindowedQueue<float> q(100);
+    WindowedQueue<float,100> q;
     assert(q.capacity() == 100);
     assert(q.count() == 0);
 
     try {
         q.pop();
         assert(false);
-    } catch (WindowedQueue<float>::NoItemsException *e) { }
+    } catch (NoItemsException *e) { }
 
     try {
         q.mean();
         assert(false);
-    } catch (WindowedQueue<float>::NoItemsException *e) { }
+    } catch (NoItemsException *e) { }
 
     try {
         q.deviation();
         assert(false);
-    } catch (WindowedQueue<float>::NoItemsException *e) { }
+    } catch (NoItemsException *e) { }
 
     for (size_t i = 0; i < 10; ++i) {
         q.push(1.0);
@@ -74,11 +74,11 @@ int main()
 
     assert(q.mean() == 49.5);
 
-    WindowedQueue<float> a(200);
-    a.push(q);
+    WindowedQueue<float,200> a;
+    a.pushQueue(q);
     assert(a.count() == 100);
     assert(a.mean() == 49.5);
-    a.push(q);
+    a.pushQueue(q);
     assert(a.count() == 200);
     assert(a.mean() == 49.5);
     for (size_t i = 0; i < 200; ++i) {
@@ -87,15 +87,10 @@ int main()
     assert(a.count() == 200);
     assert(a.mean() == 1);
 
-
-    WindowedQueue<long long> c(1000000);
+    WindowedQueue<long long,1000000> c;
     for (size_t i = 0; i < c.capacity(); ++i) {
         c.push(i);
     }
-
     c.clear();
-
-
-
     return 0;
 }
