@@ -88,7 +88,7 @@ int main()
     assert(a.mean() == 1);
 
 
-    WindowedQueue<long long> c(1000000);
+    WindowedQueue<long long> c(10000000);
     for (size_t i = 0; i < c.capacity(); ++i) {
         c.push(i);
     }
