@@ -3,151 +3,109 @@
 #include <stdio.h>
 #include <math.h>
 
-template<typename T>
+
+class NoItemsException {};
+
+template<typename T, size_t CAPACITY>
 class WindowedQueue
 {
     private:
-        const size_t capacity_;
-        size_t count_;
-        typedef struct node {
-            T item;
-            node* next;
-            node(const T& item)
-                : item(item)
-                , next(NULL)
-            {}
-
-        } node;
-
-        node* head_;
-        node* tail_;
+        size_t top_, bottom_;
+        T data_[CAPACITY];
     public:
 
-        class NoItemsException
-        {
-
-        };
-
-        WindowedQueue(size_t capacity)
-            : capacity_(capacity)
-            , count_(0)
-            , head_(NULL)
-            , tail_(NULL)
+        WindowedQueue()
+            : top_(0)
+            , bottom_(0)
         {}
-
-        ~WindowedQueue()
-        {
-            clear();
-        }
 
         size_t capacity() const
         {
-            return capacity_;
+            return CAPACITY;
         }
 
         size_t count() const
         {
-            return count_;
+            return bottom_ >= top_ ? bottom_ - top_ : capacity() - top_ + bottom_;
         }
 
         bool empty() const
         {
-            return count_ == 0;
+            return bottom_ == top_;
         }
 
         bool full() const
         {
-            return count_ == capacity_;
+            return count() == capacity();
         }
 
         void clear()
         {
-            node* t = head_;
-            while (t) {
-                node* d = t;
-                t  = t->next;
-                delete d;
-            }
-            head_ = NULL;
-            count_ = 0;
+            top_ = bottom_ = 0;
         }
 
-        size_t push(const T& value)
+        void push(const T& value)
         {
-            node* n = new node(value);
-            if (tail_) {
-                tail_->next = n;
+            if (full()) {
+                pop();
             }
-            tail_ = n;
-            if (!head_) {
-                head_ = tail_;
-            }
-            if (++count_ > capacity_) {
-                node* old_head = head_;
-                head_ = head_->next;
-                delete old_head;
-                --count_;
-            };
-
-            return count_;
+            data_[bottom_++ % capacity()] = value;
         }
 
-
-        size_t push(const WindowedQueue<T>& queue)
+        template<typename Q>
+        void pushQueue(const Q& queue) //todo: optimaze by memmove
         {
-            node* t = queue.head_;
-            while (t) {
-                push(t->item);
-                t = t->next;
+            for (size_t i = 0; i < queue.count(); ++i) {
+                push(queue.get(i));
             }
-            return count_;
         }
 
         T pop()
         {
-            if (!count_) {
+            if (empty()) {
                 throw new NoItemsException;
             }
-            T value = head_->item;
-            node* old_head = head_;
-            head_ = head_->next;
-            delete old_head;
-            if (!--count_) {
-                tail_ = head_;
-            }
+            T value = data_[top_++ % capacity()];
             return value;
+        }
+
+        T get(size_t index) const
+        {
+            if (empty()) {
+                throw new NoItemsException;
+            }
+            index = (index + top_)  % capacity();
+            return data_[index];
         }
 
         T sum() const
         {
+            size_t c = count();
             T value = 0;
-            node* t = head_;
-            while (t) {
-                value += t->item;
-                t = t->next;
+            for (size_t i = 0; i < c; ++i) {
+                value += get(i);
             }
             return value;
         }
 
         T mean() const
         {
-            if (!count_) {
+            size_t c = count();
+            if (!c) {
                 throw new NoItemsException;
             }
-            return sum() / count_;
+            return sum() / c;
         }
 
         T deviation() const
         {
             T m = mean();
+            size_t c = count();
             T carry = 0;
-            node* t = head_;
-            while (t) {
-                carry += pow(t->item - m,2);
-                t = t->next;
+            for (size_t i = 0; i < c; ++i) {
+                carry += pow(get(i) - m, 2);
             }
-
-            return sqrt(carry / count_);
+            return sqrt(carry / c);
         }
 };
 
