@@ -1,9 +1,11 @@
 #include <assert.h>
-#include "WindowedQueue.h"
 #include <stdio.h>
+
+#include "WindowedQueue.h"
+
 int main()
 {
-    WindowedQueue<float,100> q;
+    WindowedQueue<float> q(100);
     assert(q.capacity() == 100);
     assert(q.count() == 0);
 
@@ -74,11 +76,11 @@ int main()
 
     assert(q.mean() == 49.5);
 
-    WindowedQueue<float,200> a;
-    a.pushQueue(q);
+    WindowedQueue<float> a(200);
+    a.push(q);
     assert(a.count() == 100);
     assert(a.mean() == 49.5);
-    a.pushQueue(q);
+    a.push(q);
     assert(a.count() == 200);
     assert(a.mean() == 49.5);
     for (size_t i = 0; i < 200; ++i) {
@@ -87,7 +89,7 @@ int main()
     assert(a.count() == 200);
     assert(a.mean() == 1);
 
-    WindowedQueue<long long,1000000> c;
+    WindowedQueue<long long> c(1000000);
     for (size_t i = 0; i < c.capacity(); ++i) {
         c.push(i);
     }

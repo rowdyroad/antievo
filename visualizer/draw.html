@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+ <head>
+ <script src="bower_components/jquery/dist/jquery.min.js"></script>
+ <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+ <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+ <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+ <script src="libs/canvasjs.min.js"></script>
+ <script>
+ 	var idx = 0;
+
+ 	var points = [];
+
+ 	function createChart(id, title, points)
+    {
+        var chart =  new CanvasJS.Chart(id,{
+                zoomEnabled:true,
+                title :{
+                    text: title
+                },
+                data: [ { type: "line", dataPoints: points } ]
+            });
+        chart.render();
+        return chart;
+    }
+
+ 	function create()
+ 	{
+ 		var cntr = $("<div>").append($("#template").html());
+ 		$(".graphs").append(cntr);
+ 		var graph_id = "graph-" + (++idx);
+ 		cntr.find(".graph").attr("id", graph_id);
+ 		points[graph_id] = [];
+ 		var graph = createChart(graph_id,  $("#graph-name").val(), points[graph_id]);
+ 		cntr.find(".clear").click(function() {
+ 			points[graph_id].length = 0;
+ 			graph.render();
+ 		});
+
+ 		cntr.find(".refresh").click(function() {
+ 			var data = cntr.find(".data").val().split("\n");
+ 			var x = parseInt(cntr.find(".x").val());
+ 			var y = parseInt(cntr.find(".y").val());
+ 			var ps = points[graph_id];
+ 			for (var i in data) {
+ 				var row = data[i].split("\t");
+ 				if (	typeof(row[x])  != "undefined"
+ 						&&
+ 						typeof(row[y])  != "undefined"
+ 					) {
+ 					ps.push({x: parseInt(row[x]), y: parseFloat(row[y])});
+ 				}
+
+ 			}
+ 			graph.render();
+ 		});
+ 	}
+ </script>
+ </head>
+ <body>
+ 	<div class="container">
+	 	<div id="template" style="display:none">
+	 		<div class="row">
+	 			<div class="col-md-8">
+	 			<button class="btn btn-small clear">Clear</button>
+	 			<div class="graph" style="height: 300px; width:100%;"></div></div>
+	 			<div class="col-md-4"><textarea style="width:100%;height:300px" class="data"></textarea><br/>
+	 			X:&nbsp;<input type="text" size="3" class="x"/>
+	 			Y:&nbsp;<input type="text" size="3" class="y"/>
+	 			<br/>
+	 			<br/>
+	 			<button class="btn btn-small refresh">Refresh</button></div>
+	 		</div>
+	 	</div>
+	 	<input type="text" name="name" id="graph-name"/>
+	 	<button class="btn btn-primary" onclick="create()">Add</button>
+	 	<div class="graphs"></div>
+ 	</div>
+ </body>
+ </html>

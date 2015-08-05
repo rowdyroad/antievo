@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+ <head>
+ <script src="bower_components/jquery/dist/jquery.min.js"></script>
+ <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+ <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+ <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+ <script src="libs/canvasjs.min.js"></script>
+ <script src="data.js"></script>
+ <script>
+
+ function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+ }
+
+ var hst = [];
+
+ var views = getParameterByName('view').split(",");
+
+ $(document).ready(function() {
+
+ 	var connection = new WebSocket('ws://127.0.0.1:8080');
+
+    function createChart(id, title, points)
+    {
+        var chart =  new CanvasJS.Chart(id,{
+                zoomEnabled:true,
+                title :{
+                    text: title
+                },
+                data: [ { type: "line", dataPoints: points } ]
+            });
+        chart.render();
+        return chart;
+    }
+
+    var points = {
+        gx:[],
+        gy:[],
+        gz:[],
+        wx:[],
+        wy:[],
+        wz:[]
+    };
+
+    var charts = {
+        gx: createChart('gravity-x', 'X', data.gx),
+        gy: createChart('gravity-y', 'Y', data.gy),
+        gz: createChart('gravity-z', 'Z', data.gz),
+        wx: createChart('world-x', 'X', data.wx),
+        wy: createChart('world-y', 'Y', data.wy),
+        wz: createChart('world-z', 'Z', data.wz)
+    };
+
+
+    connection.onopen = function () {
+        console.log('connected', connection);
+    };
+
+    connection.onerror = function (error) {
+        console.log('error', error);
+    };
+
+    connection.onmessage = function (message) {
+            var json = JSON.parse(message.data);
+            if (json && json.type == 'measure') {
+                var line = json.data.split("\t");
+                var measure  = {
+                    gx:line[1] ? parseFloat(line[1]) : 0,
+                    gy:line[2] ? parseFloat(line[2]) : 0,
+                    gz:line[3] ? parseFloat(line[3]) : 0,
+                    wx:line[4] ? parseFloat(line[4]) : 0,
+                    wy:line[5] ? parseFloat(line[5]) : 0,
+                    wz:line[6] ? parseFloat(line[6]) : 0
+                };
+                var time = parseInt(line[0]);
+                for (var i in points) {
+                    if (views.indexOf(i) == -1) {
+                        continue;
+                    }
+                    points[i].push({x: time, y: measure[i]});
+                    if (points[i].length > 500) {
+                        points[i].shift();
+                    }
+                    charts[i].render();
+                }
+            }
+    };
+});
+ </script>
+ </head>
+ <body>
+    <div class="container">
+        <div class="row">
+            <h3> Gravity </h3>
+            <div class="col-md-4"><div id="gravity-x" style="height: 300px; width:100%;"></div></div>
+            <div class="col-md-4"><div id="gravity-y" style="height: 300px; width:100%;"></div></div>
+            <div class="col-md-4"><div id="gravity-z" style="height: 300px; width:100%;"></div></div>
+        </div>
+        <div class="row">
+            <h3> World </h3>
+            <div class="col-md-4"><div id="world-x" style="height: 300px; width:100%;"></div></div>
+            <div class="col-md-4"><div id="world-y" style="height: 300px; width:100%;"></div></div>
+            <div class="col-md-12"><div id="world-z" style="height: 300px; width:100%;"></div></div>
+        </div>
+    </div>
+ </body>
+ </html>

@@ -2,26 +2,42 @@
 #define __WINDOWED_QUEUE_H__
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 
 class NoItemsException {};
 
-template<typename T, size_t CAPACITY>
+template<typename T>
 class WindowedQueue
 {
     private:
-        size_t top_, bottom_;
-        T data_[CAPACITY];
+        size_t  capacity_,
+                top_,
+                bottom_;
+        T* data_;
     public:
 
-        WindowedQueue()
-            : top_(0)
+        WindowedQueue(size_t capacity)
+            : capacity_(capacity)
+            , top_(0)
             , bottom_(0)
-        {}
+        {
+            data_ = new T[capacity];
+        }
+
+        ~WindowedQueue()
+        {
+            delete [] data_;
+        }
 
         size_t capacity() const
         {
-            return CAPACITY;
+            return capacity_;
+        }
+
+        size_t space() const
+        {
+            return capacity() - count();
         }
 
         size_t count() const
@@ -52,8 +68,7 @@ class WindowedQueue
             data_[bottom_++ % capacity()] = value;
         }
 
-        template<typename Q>
-        void pushQueue(const Q& queue) //todo: optimaze by memmove
+        void push(const WindowedQueue<T>& queue)
         {
             for (size_t i = 0; i < queue.count(); ++i) {
                 push(queue.get(i));

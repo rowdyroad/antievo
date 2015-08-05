@@ -1,0 +1,5 @@
+#!/bin/bash
+POSTFIX=$1
+TIMESTAMP=`date +%Y-%m-%d-%H:%M:%S`
+
+node read.js | tee logs/$TIMESTAMP-$POSTFIX.log
